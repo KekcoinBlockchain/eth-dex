@@ -76,12 +76,24 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall]) => {
 			
 			beforeEach(async() => {
 				// Withdraw 3 out 3 ethers
-				etherWithdrawal = await exchange.withdrawEther(etherToWei(3), {from: kinKendall})
+				etherWithdrawal = await exchange.withdrawEther(etherQuantity, {from: kinKendall})
 			})
 
 			it('withdraws correct amount of funds in ether', async() => {
 				const etherBalance = await exchange.tokens(etherAddressZero, kinKendall)
 				etherBalance.toString().should.equal('0')
+			})
+
+			it('emits a withdrawal event', async() => {
+				
+				const log_object = etherWithdrawal.logs[0]
+				log_object.event.should.equal("Withdraw")
+
+				const args = log_object.args
+				args.token.should.equal(etherAddressZero, "token addresses don't match")
+				args.user.should.equal(kinKendall, "user address logged doesn't match kinKendall address from ganache")
+				args.amount.toString().should.equal(etherToWei(3).toString(), "amount logged does not match expected value")
+				args.balance.toString().should.equal('0', "balance logged does not meet what's expected")	
 			})
 
 		})

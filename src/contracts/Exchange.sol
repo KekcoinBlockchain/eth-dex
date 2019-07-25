@@ -31,6 +31,7 @@ contract Exchange {
 
 	// events
 	event Deposit(address token, address user, uint256 amount, uint256 balance);
+	event Withdraw(address token, address user, uint256 amount, uint256 balance);
 
 	// first 'address' key tracks token address, 2nd 'address' key tracks user account that deposited token
 	mapping(address => mapping(address => uint256)) public tokens;
@@ -53,6 +54,7 @@ contract Exchange {
 
 	function withdrawEther(uint _amount) payable public {
 		tokens[etherAddress][msg.sender] = tokens[etherAddress][msg.sender].sub(_amount);
+		emit Withdraw(etherAddress, msg.sender, _amount, tokens[etherAddress][msg.sender]);
 	} 
 
 	function depositToken(address _token, uint _amount) public {
