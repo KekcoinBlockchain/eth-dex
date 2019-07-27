@@ -162,4 +162,56 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall]) => {
 
 		})
 	})
+
+	describe('withdrawing tokens', () => {
+
+		let exchangeWithdraw
+		let trialAmount
+
+		describe('successful withdraw', () => {
+		
+			beforeEach(async() => {
+				
+				// approves and deposits tokens to test withdrawal
+				trialAmount = tokensToWei(9)
+				await token.approve(exchange.address, trialAmount, {from: kinKendall})
+				await exchange.depositToken(token.address, trialAmount, {from: kinKendall})
+
+				// test withdrawal function
+				exchangeWithdraw = await exchange.withdrawToken(token.address, trialAmount, {from: kinKendall})
+			})
+
+			it('withdraws tokens accurately', async() => {
+
+				const accountBalance = await exchange.tokens(token.address, kinKendall)
+				accountBalance.toString().should.equal('0')
+			})
+
+			// it('emits a deposit event', async() => {
+				
+			// 	const log_object = exchangeDeposit.logs[0]
+			// 	log_object.event.should.equal("Deposit")
+
+			// 	const args = log_object.args
+			// 	args.token.should.equal(token.address, "token addresses don't match")
+			// 	args.user.should.equal(kinKendall, "user address logged doesn't match kinKendall address from ganache")
+			// 	args.amount.toString().should.equal(tokensToWei(7).toString(), "amount logged does not match testAmount")
+			// 	args.balance.toString().should.equal(tokensToWei(7).toString(), "balance logged does not meet what's expected")	
+			// })
+		})
+
+		describe('failed withdrawal', () => {
+
+			// it('when exchange has insufficient tokens approved for transferring', async() => {
+			// 	// Exchange not approved for any tokens in this code path
+			// 	await exchange.depositToken(token.address, testAmount, {from: kinKendall}).should.be.rejectedWith(EVM_REVERT)
+			// })
+
+			// it('rejects native ether deposits', async() => {
+			// 	// Exchange does not allow depositToken function to be used to deposit native ether even when approved
+			// 	await exchange.depositToken(etherAddressZero, testAmount, {from: kinKendall}).should.be.rejectedWith(EVM_REVERT)
+			// })
+
+		})
+	})
 })
