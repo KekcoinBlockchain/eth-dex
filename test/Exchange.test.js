@@ -212,5 +212,21 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall]) => {
 				await exchange.withdrawToken(token.address, tokensToWei(10), {from: kinKendall}).should.be.rejectedWith(EVM_REVERT)
 			})
 		})
+
+		describe('checking balances', () => {
+
+			beforeEach(async() => {
+				exchange.depositEther({from: kinKendall, value: etherToWei(13)})							// deposit 13 ether from kin to exchange
+				await token.approve(exchange.address, tokensToWei(15), {from: kinKendall})					// approve 15 tokens from kin to exchange
+				await exchange.depositToken(token.address, tokensToWei(15), {from: kinKendall})				// deposit 15 tokens from kin to exchange
+			})
+
+			it('returns user ether balance', async() => {
+				const userEther = await exchange.balanceOf(etherAddressZero, kinKendall)
+				userEther.toString().should.equal(etherToWei(13).toString())
+				const userToken = await exchange.balanceOf(token.address, kinKendall)
+				userToken.toString().should.equal(etherToWei(15).toString())
+			})
+		})
 	})
 })

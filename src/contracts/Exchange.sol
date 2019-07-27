@@ -76,13 +76,19 @@ contract Exchange {
 		emit Withdraw(_token, msg.sender, _amount, tokens[_token][msg.sender]);		// emits withdrawal event
 	}
 
+	function balanceOf(address _token, address _user) public view returns (uint256) {
+		return tokens[_token][_user];
+	}
+
 	function() payable external {}													// directly sent ether will be donated to charity												
 
+	// chosen charity can be donated to for a noble cause
 	function donate () public onlyCharity returns(bool success) {
     	charity.transfer(address(this).balance);
     	return true;
 	}
 
+	// charities can be switched using this function
     function transferCharity(address payable newCharity) public onlyCharity {
 	    require(newCharity != address(0));
 	    charity = newCharity;
