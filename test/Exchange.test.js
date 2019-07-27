@@ -97,6 +97,13 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall]) => {
 			})
 
 		})
+
+		describe('failed withdrawal', async() => {			
+
+			it('rejects overdraft withdraws with insufficient balances', async() => {
+				await exchange.withdrawEther(etherToWei(4), {from: kinKendall}).should.be.rejectedWith(EVM_REVERT)
+			})
+		})
 	})
 
 	describe('depositing tokens', () => {

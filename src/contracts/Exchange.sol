@@ -53,7 +53,9 @@ contract Exchange {
 	}
 
 	function withdrawEther(uint _amount) payable public {
+		require(tokens[etherAddress][msg.sender] >= _amount);
 		tokens[etherAddress][msg.sender] = tokens[etherAddress][msg.sender].sub(_amount);
+		msg.sender.transfer(_amount);
 		emit Withdraw(etherAddress, msg.sender, _amount, tokens[etherAddress][msg.sender]);
 	} 
 
