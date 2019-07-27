@@ -35,6 +35,7 @@ contract Exchange {
 
 	
 	mapping(address => mapping(address => uint256)) public tokens;			// first 'address' key tracks token address, 2nd 'address' key tracks user account that deposited token
+	mapping (uint256 => _orderObject) public orders;						// list of all order objects currently stored on eth smart contract dex
 
 	// constructor instantiates decentralized exchange smart contract
 	constructor(address _feeReceiver, uint256 _feePercent) public {
@@ -76,9 +77,27 @@ contract Exchange {
 		emit Withdraw(_token, msg.sender, _amount, tokens[_token][msg.sender]);		// emits withdrawal event
 	}
 
+	// model orders with a custom struct called _orderObject
+	struct _orderObject {
+		uint16 id;
+		address user;
+		address tokenBuy;
+		address tokenSell;
+		uint256 amountBuy;
+		uint256 amountSell;
+		uint8 timestamp;
+	}
+
 	function balanceOf(address _token, address _user) public view returns (uint256) {
 		return tokens[_token][_user];
 	}
+
+	// add orders to storage
+	function makeOrder(address _tokenBuy, address _tokenSell, uint256 _amountBuy, uint256 _amountSell) public {
+
+	}
+
+	// retrieve orders from storage
 
 	function() payable external {}													// directly sent ether will be donated to charity												
 
