@@ -10,10 +10,10 @@ import "./Token.sol";
 // To Do List:
 	// [✓] Set the fee account
 	// [✓] Deposit Ether
-	// [] Withdraw Ether
+	// [✓] Withdraw Ether
 	// [✓] Deposit Tokens
-	// [] Withdraw Tokens
-	// [] Check Balances
+	// [✓] Withdraw Tokens
+	// [✓] Check Balances
 	// [] Make Order
 	// [] Cancel Order
 	// [] Fill Order
