@@ -59,11 +59,16 @@ contract Exchange {
 		emit Withdraw(etherAddress, msg.sender, _amount, tokens[etherAddress][msg.sender]);
 	} 
 
-	function depositToken(address _token, uint _amount) public {
+	function depositToken(address _token, uint256 _amount) public {
 		require (_token != etherAddress);											// ensure token deposited is not native ether		
 		require (Token(_token).transferFrom(msg.sender, address(this), _amount));	// send tokens from the user's wallet to this exchange contract	
 		tokens[_token][msg.sender] = tokens[_token][msg.sender].add(_amount);		// manages deposit and updates balance		
 		emit Deposit(_token, msg.sender, _amount, tokens[_token][msg.sender]);		// emits deposit event
+	}
+
+	function withdrawToken(address _token, uint256 _amount) public {
+		tokens[_token][msg.sender] = tokens[_token][msg.sender].sub(_amount);
+		require(Token(_token).transfer(msg.sender, _amount));
 	}
 
 	// directly sent ether will be donated to charity
