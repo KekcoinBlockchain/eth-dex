@@ -24,39 +24,41 @@ contract Exchange {
 	using SafeMath for uint;
 
 	// state variables
-	address public feeRecevier; // account address that receives exchange usage fees
-	uint256 public feePercent; // sets fee percentage taken by exchange
-	address constant etherAddress = address(0); // uses the 0 address as a placeholder token for native ether
-	address payable public charity;
+	address public feeRecevier; 					// account address that receives exchange usage fees
+	uint256 public feePercent; 						// sets fee percentage taken by exchange
+	address constant etherAddress = address(0); 	// uses the 0 address as a placeholder token for native ether
+	address payable public charity;					// charity address
 
 	// events
-	event Deposit(address token, address user, uint256 amount, uint256 balance);
-	event Withdraw(address token, address user, uint256 amount, uint256 balance);
+	event Deposit(address token, address user, uint256 amount, uint256 balance);				// general erc20 deposit event structure
+	event Withdraw(address token, address user, uint256 amount, uint256 balance);				// general erc20 withdraw event structure
 
-	// first 'address' key tracks token address, 2nd 'address' key tracks user account that deposited token
-	mapping(address => mapping(address => uint256)) public tokens;
+	
+	mapping(address => mapping(address => uint256)) public tokens;			// first 'address' key tracks token address, 2nd 'address' key tracks user account that deposited token
 
+	// constructor instantiates decentralized exchange smart contract
 	constructor(address _feeReceiver, uint256 _feePercent) public {
 		feeRecevier = _feeReceiver;
 		feePercent = _feePercent;
 		charity = msg.sender;
 	}
 
+	// defines charity restrictions usable on functions
 	modifier onlyCharity() {
     	require(msg.sender == charity);
    	 	_;
   	}
 
 	function depositEther() payable public {
-		tokens[etherAddress][msg.sender] = tokens[etherAddress][msg.sender].add(msg.value);
-		emit Deposit(etherAddress, msg.sender, msg.value, tokens[etherAddress][msg.sender]);
+		tokens[etherAddress][msg.sender] = tokens[etherAddress][msg.sender].add(msg.value);		// updates balance to add ether to user's account
+		emit Deposit(etherAddress, msg.sender, msg.value, tokens[etherAddress][msg.sender]);	// emits deposit event
 	}
 
 	function withdrawEther(uint _amount) payable public {
-		require(tokens[etherAddress][msg.sender] >= _amount);
-		tokens[etherAddress][msg.sender] = tokens[etherAddress][msg.sender].sub(_amount);
-		msg.sender.transfer(_amount);
-		emit Withdraw(etherAddress, msg.sender, _amount, tokens[etherAddress][msg.sender]);
+		require(tokens[etherAddress][msg.sender] >= _amount);									// ensures user can't withdraw more ether than they own
+		tokens[etherAddress][msg.sender] = tokens[etherAddress][msg.sender].sub(_amount);		// subtracts ether balance available to withdraw for current user
+		msg.sender.transfer(_amount);															// transfers ether to user
+		emit Withdraw(etherAddress, msg.sender, _amount, tokens[etherAddress][msg.sender]);		// emits withdrawal event
 	} 
 
 	function depositToken(address _token, uint256 _amount) public {
@@ -67,12 +69,14 @@ contract Exchange {
 	}
 
 	function withdrawToken(address _token, uint256 _amount) public {
-		tokens[_token][msg.sender] = tokens[_token][msg.sender].sub(_amount);
-		require(Token(_token).transfer(msg.sender, _amount));
+		require (_token != etherAddress);											// ensure erc20 token is being withdrawn and not native ether
+		require(tokens[_token][msg.sender] >= _amount);								// ensure user doesn't withdraw more tokens than they own
+		tokens[_token][msg.sender] = tokens[_token][msg.sender].sub(_amount);		// safely subtracts balance with zerppelin safemaths
+		require(Token(_token).transfer(msg.sender, _amount));						// requires the transfer of tokens to the user
+		emit Withdraw(_token, msg.sender, _amount, tokens[_token][msg.sender]);		// emits withdrawal event
 	}
 
-	// directly sent ether will be donated to charity
-	function() payable external {}													
+	function() payable external {}													// directly sent ether will be donated to charity												
 
 	function donate () public onlyCharity returns(bool success) {
     	charity.transfer(address(this).balance);
