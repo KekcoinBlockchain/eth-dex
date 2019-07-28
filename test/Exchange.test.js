@@ -239,8 +239,33 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall]) => {
 		})
 
 		it('registers the newly made order', async() => {
+			
 			const nonce = await exchange.orderNonce()
 			nonce.toString().should.equal('1')
+
+			const sampleOrder = await exchange.orders('1')
+			sampleOrder.id.toString().should.equal('1', 'id does not match')
+			sampleOrder.user.should.equal(kinKendall, 'user does not match')
+			sampleOrder.tokenBuy.should.equal(token.address, 'token address does not match')
+			sampleOrder.tokenSell.should.equal(etherAddressZero, 'ether address does not match')
+			sampleOrder.amountBuy.toString().should.equal(tokensToWei(17).toString(), 'amountBuy does not match expected amount of tokens')
+			sampleOrder.amountSell.toString().should.equal(etherToWei(1).toString(), 'amountSell does not match expected amount of ether')
+			sampleOrder.timestamp.toString().length.should.be.at.least(1, 'timestamp is not present')
+		})
+
+		it('emits an order event', async() => {
+			
+			const log_object = newOrder.logs[0]
+			log_object.event.should.equal("Order")
+
+			const args = log_object.args
+			args.id.toString().should.equal('1', 'id does not match')
+			args.user.should.equal(kinKendall, 'user does not match')
+			args.tokenBuy.should.equal(token.address, 'token address does not match')
+			args.tokenSell.should.equal(etherAddressZero, 'ether address does not match')
+			args.amountBuy.toString().should.equal(tokensToWei(17).toString(), 'amountBuy does not match expected amount of tokens')
+			args.amountSell.toString().should.equal(etherToWei(1).toString(), 'amountSell does not match expected amount of ether')
+			args.timestamp.toString().length.should.be.at.least(1, 'timestamp is not present')
 		})
 	})
 })

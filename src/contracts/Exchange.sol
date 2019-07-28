@@ -14,7 +14,7 @@ import "./Token.sol";
 	// [✓] Deposit Tokens
 	// [✓] Withdraw Tokens
 	// [✓] Check Balances
-	// [...] Make Order
+	// [✓] Make Order
 	// [] Cancel Order
 	// [] Fill Order
 	// [] Charge fees
