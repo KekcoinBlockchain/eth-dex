@@ -27,15 +27,16 @@ contract Exchange {
 	address public feeRecevier; 					// account address that receives exchange usage fees
 	uint256 public feePercent; 						// sets fee percentage taken by exchange
 	address constant etherAddress = address(0); 	// uses the 0 address as a placeholder token for native ether
+	uint256 public orderNonce;						// counter that is incremented for each new order on dex smart contract
 	address payable public charity;					// charity address
 
 	// events
-	event Deposit(address token, address user, uint256 amount, uint256 balance);				// general erc20 deposit event structure
-	event Withdraw(address token, address user, uint256 amount, uint256 balance);				// general erc20 withdraw event structure
-
+	event Deposit(address token, address user, uint256 amount, uint256 balance);															// general erc20 deposit event structure
+	event Withdraw(address token, address user, uint256 amount, uint256 balance);															// general erc20 withdraw event structure
+	event Order(uint16 id, address user, address tokenBuy, address tokenSell, uint256 amountBuy, uint256 amountSell, uint8 timestamp);		// customized order event
 	
 	mapping(address => mapping(address => uint256)) public tokens;			// first 'address' key tracks token address, 2nd 'address' key tracks user account that deposited token
-	mapping (uint256 => _orderObject) public orders;						// list of all order objects currently stored on eth smart contract dex
+	mapping (uint256 => orderObject) public orders;						// list of all order objects currently stored on eth smart contract dex
 
 	// constructor instantiates decentralized exchange smart contract
 	constructor(address _feeReceiver, uint256 _feePercent) public {
@@ -77,8 +78,8 @@ contract Exchange {
 		emit Withdraw(_token, msg.sender, _amount, tokens[_token][msg.sender]);		// emits withdrawal event
 	}
 
-	// model orders with a custom struct called _orderObject
-	struct _orderObject {
+	// model orders with a custom struct called orderObject
+	struct orderObject {
 		uint16 id;
 		address user;
 		address tokenBuy;
@@ -94,12 +95,14 @@ contract Exchange {
 
 	// add orders to storage
 	function makeOrder(address _tokenBuy, address _tokenSell, uint256 _amountBuy, uint256 _amountSell) public {
-
+		orderNonce = orderNonce.add(1);																						// increments order counter by one
+		orders[orderNonce] = orderObject(orderNonce, msg.sender, _tokenBuy, _tokenSell, _amountBuy, _amountSell, now);		// now = current Epoch time in seconds
+		emit Order(orderNonce, msg.sender, _tokenBuy, _tokenSell, _amountBuy, _amountSell, now);							// triggers order event to rest of ethereum
 	}
 
 	// retrieve orders from storage
 
-	function() payable external {}													// directly sent ether will be donated to charity												
+	function() payable external {}																							// directly sent ether will be donated to charity												
 
 	// chosen charity can be donated to for a noble cause
 	function donate () public onlyCharity returns(bool success) {
