@@ -227,6 +227,20 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall]) => {
 				const userToken = await exchange.balanceOf(token.address, kinKendall)
 				userToken.toString().should.equal(etherToWei(15).toString())
 			})
+		})			
+	})
+
+	describe('making orders', () => {
+
+		let newOrder
+
+		beforeEach(async() => {
+			newOrder = await exchange.makeOrder(token.address, etherAddressZero, tokensToWei(17), etherToWei(1), {from: kinKendall})
+		})
+
+		it('registers the newly made order', async() => {
+			const nonce = await exchange.orderNonce()
+			nonce.toString().should.equal('1')
 		})
 	})
 })

@@ -14,26 +14,26 @@ import "./Token.sol";
 	// [✓] Deposit Tokens
 	// [✓] Withdraw Tokens
 	// [✓] Check Balances
-	// [] Make Order
+	// [...] Make Order
 	// [] Cancel Order
 	// [] Fill Order
 	// [] Charge fees
 
 contract Exchange {
 
-	using SafeMath for uint;
+	using SafeMath for uint256; 
 
 	// state variables
 	address public feeRecevier; 					// account address that receives exchange usage fees
 	uint256 public feePercent; 						// sets fee percentage taken by exchange
 	address constant etherAddress = address(0); 	// uses the 0 address as a placeholder token for native ether
-	uint256 public orderNonce;						// counter that is incremented for each new order on dex smart contract
+	uint256 public orderNonce;						// counter that is zero by default and incremented for each new order on dex smart contract
 	address payable public charity;					// charity address
 
 	// events
 	event Deposit(address token, address user, uint256 amount, uint256 balance);															// general erc20 deposit event structure
 	event Withdraw(address token, address user, uint256 amount, uint256 balance);															// general erc20 withdraw event structure
-	event Order(uint16 id, address user, address tokenBuy, address tokenSell, uint256 amountBuy, uint256 amountSell, uint8 timestamp);		// customized order event
+	event Order(uint256 id, address user, address tokenBuy, address tokenSell, uint256 amountBuy, uint256 amountSell, uint256 timestamp);		// customized order event
 	
 	mapping(address => mapping(address => uint256)) public tokens;			// first 'address' key tracks token address, 2nd 'address' key tracks user account that deposited token
 	mapping (uint256 => orderObject) public orders;						// list of all order objects currently stored on eth smart contract dex
@@ -80,13 +80,13 @@ contract Exchange {
 
 	// model orders with a custom struct called orderObject
 	struct orderObject {
-		uint16 id;
+		uint256 id;
 		address user;
 		address tokenBuy;
 		address tokenSell;
 		uint256 amountBuy;
 		uint256 amountSell;
-		uint8 timestamp;
+		uint256 timestamp;
 	}
 
 	function balanceOf(address _token, address _user) public view returns (uint256) {
