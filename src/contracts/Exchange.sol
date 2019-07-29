@@ -4,7 +4,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Token.sol";
 
 // Deposit & Withdraw Funds
-// Manage Orders - Make or Cancel
 // Handle Trades - Charge Peers
 
 // To Do List:
@@ -14,9 +13,9 @@ import "./Token.sol";
 	// [✓] Deposit Tokens
 	// [✓] Withdraw Tokens
 	// [✓] Check Balances
-	// [✓] Make Order
-	// [] Cancel Order
-	// [] Fill Order
+	// [✓] Make Limit Order
+	// [...] Cancel Limit Order
+	// [] Fill Limit Order
 	// [] Charge fees
 
 contract Exchange {
@@ -31,12 +30,14 @@ contract Exchange {
 	address payable public charity;					// charity address
 
 	// events
-	event Deposit(address token, address user, uint256 amount, uint256 balance);															// general erc20 deposit event structure
-	event Withdraw(address token, address user, uint256 amount, uint256 balance);															// general erc20 withdraw event structure
-	event Order(uint256 id, address user, address tokenBuy, address tokenSell, uint256 amountBuy, uint256 amountSell, uint256 timestamp);		// customized order event
-	
+	event Deposit(address token, address user, uint256 amount, uint256 balance);																	// general erc20 deposit event structure
+	event Withdraw(address token, address user, uint256 amount, uint256 balance);																	// general erc20 withdraw event structure
+	event Order(uint256 id, address user, address tokenBuy, address tokenSell, uint256 amountBuy, uint256 amountSell, uint256 timestamp);			// customized order event
+	event Cancelled(uint256 id, address user, address tokenBuy, address tokenSell, uint256 amountBuy, uint256 amountSell, uint256 timestamp);		// customized cacel order event
+
 	mapping(address => mapping(address => uint256)) public tokens;			// first 'address' key tracks token address, 2nd 'address' key tracks user account that deposited token
-	mapping (uint256 => orderObject) public orders;						// list of all order objects currently stored on eth smart contract dex
+	mapping (uint256 => orderObject) public orders;							// list of all order objects currently stored on eth smart contract dex
+	mapping(uint256 => bool) public ordersCancelled;
 
 	// constructor instantiates decentralized exchange smart contract
 	constructor(address _feeReceiver, uint256 _feePercent) public {
@@ -98,6 +99,16 @@ contract Exchange {
 		orderNonce = orderNonce.add(1);																						// increments order counter by one
 		orders[orderNonce] = orderObject(orderNonce, msg.sender, _tokenBuy, _tokenSell, _amountBuy, _amountSell, now);		// now = current Epoch time in seconds
 		emit Order(orderNonce, msg.sender, _tokenBuy, _tokenSell, _amountBuy, _amountSell, now);							// triggers order event to rest of ethereum
+	}
+
+	// cancel orders 
+	function cancelOrder(uint256 _id) public {
+		orderObject storage orderTemp = orders[_id];														// retrieves order in question and explicitly commits to storage
+		require(orderTemp.id == _id);																		// ensures returned order object is not a blank struct with default values
+		require(address(orderTemp.user) == msg.sender);														// ensures user can only cancel their own orders
+		
+		ordersCancelled[_id] = true;
+		emit Cancelled(orderNonce, msg.sender, _tokenBuy, _tokenSell, _amountBuy, _amountSell, now);
 	}
 
 	// retrieve orders from storage
