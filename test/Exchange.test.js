@@ -5,7 +5,7 @@ const Token = artifacts.require('./Token')
 
 require('chai').use(require('chai-as-promised')).should()
 
-contract('Exchange', ([deployer, feeReceiver, kinKendall]) => {
+contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) => {
 
 	let exchange
 	let token
@@ -266,6 +266,67 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall]) => {
 			args.amountBuy.toString().should.equal(tokensToWei(17).toString(), 'amountBuy does not match expected amount of tokens')
 			args.amountSell.toString().should.equal(etherToWei(1).toString(), 'amountSell does not match expected amount of ether')
 			args.timestamp.toString().length.should.be.at.least(1, 'timestamp is not present')
+		})
+	})
+
+	describe('various order features', () => {
+
+		beforeEach(async() => {
+
+			// user deposits some ether
+			await exchange.depositEther({from: kinKendall, value: etherToWei(3)})
+
+			// user makes an order to buy tokens using ether
+			await exchange.makeOrder(token.address, etherAddressZero, tokensToWei(20), etherToWei(2), {from: kinKendall})
+		})
+
+		describe('cancelling orders', async() => {
+
+			let cancelledOrder
+
+			describe('successfully cancelled order', async() => {
+
+				beforeEach(async() => {
+
+					cancelledOrder = await exchange.cancelOrder('1', {from: kinKendall})
+				})
+
+				it('updates state with all cancelled orders', async() => {
+					
+					const cancellationSuccess = await exchange.ordersCancelled(1)
+					cancellationSuccess.should.equal(true)
+				})
+
+				it('emits a cancellation event', async() => {
+					
+					const log_object = cancelledOrder.logs[0]
+					log_object.event.should.equal("Cancelled")
+
+					const args = log_object.args
+					args.id.toString().should.equal('1', 'id does not match')
+					args.user.should.equal(kinKendall, 'user does not match')
+					args.tokenBuy.should.equal(token.address, 'token address does not match')
+					args.tokenSell.should.equal(etherAddressZero, 'ether address does not match')
+					args.amountBuy.toString().should.equal(tokensToWei(20).toString(), 'amountBuy does not match expected amount of tokens')
+					args.amountSell.toString().should.equal(etherToWei(2).toString(), 'amountSell does not match expected amount of ether')
+					args.timestamp.toString().length.should.be.at.least(1, 'timestamp is not present')
+				})
+			})
+
+			describe('failed cancelled order', async() => {
+
+				it('rejects invalid order ids', async() => {
+					
+					const invalidOrderID = 2
+					await exchange.cancelOrder(invalidOrderID, {from: kinKendall}).should.be.rejectedWith(EVM_REVERT) 
+				})
+
+				it('rejects cancellation attemps of unauthorized orders', async() => {
+					
+					//valid order attempted to be cancelled by unauthorized user
+					await exchange.cancelOrder('1', {from: srinjoyChakravarty}).should.be.rejectedWith(EVM_REVERT)
+				})
+			})
 		})
 	})
 })

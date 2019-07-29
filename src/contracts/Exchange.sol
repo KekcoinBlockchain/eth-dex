@@ -14,7 +14,7 @@ import "./Token.sol";
 	// [✓] Withdraw Tokens
 	// [✓] Check Balances
 	// [✓] Make Limit Order
-	// [...] Cancel Limit Order
+	// [✓] Cancel Limit Order
 	// [] Fill Limit Order
 	// [] Charge fees
 
@@ -108,7 +108,7 @@ contract Exchange {
 		require(address(orderTemp.user) == msg.sender);														// ensures user can only cancel their own orders
 		
 		ordersCancelled[_id] = true;
-		emit Cancelled(orderNonce, msg.sender, _tokenBuy, _tokenSell, _amountBuy, _amountSell, now);
+		emit Cancelled(orderTemp.id, msg.sender, orderTemp.tokenBuy, orderTemp.tokenSell, orderTemp.amountBuy, orderTemp.amountSell, now);
 	}
 
 	// retrieve orders from storage
