@@ -9,14 +9,17 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 	let exchange
 	let token
-	const exchangeCut = 4
+	const makerNumerator = 11
+	const makerDenominator = 25
+	const takerNumerator = 17
+	const takerDenominator = 50
 
 	beforeEach(async() => {
 		//Sets up exchange for all tests
-		exchange = await Exchange.new(feeReceiver, exchangeCut)
+		exchange = await Exchange.new(feeReceiver, makerNumerator, makerDenominator, takerNumerator, takerDenominator)
 		//Sets up dexcoin as the sample erc20 token for all tests
 		token = await Token.new()
-		// Gives kin the user some tokens to trade with on the exchange
+		// Gives kin the maker some tokens to trade with on the exchange
 		token.transfer(kinKendall, tokensToWei(25), {from: deployer})
 	})
 
@@ -27,9 +30,24 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 			feeAddress.should.equal(feeReceiver)
 		})
 
-		it('tracks the fee percentage', async() => {
-			const feePercent = await exchange.feePercent()
-			feePercent.toString().should.equal(exchangeCut.toString())
+		it('tracks the maker numerator', async() => {
+			const makerNumerator = await exchange.makerNumerator()
+			makerNumerator.toString().should.equal('11')
+		})
+
+		it('tracks the maker denominator', async() => {
+			const makerDenominator = await exchange.makerDenominator()
+			makerDenominator.toString().should.equal('25')
+		})
+
+		it('tracks the taker numerator', async() => {
+			const takerNumerator = await exchange.takerNumerator()
+			takerNumerator.toString().should.equal('17')
+		})
+
+		it('tracks the taker denominator', async() => {
+			const takerDenominator = await exchange.takerDenominator()
+			takerDenominator.toString().should.equal('50')
 		})
 	})
 
@@ -55,7 +73,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 			const args = log_object.args
 			args.token.should.equal(etherAddressZero, "token addresses don't match")
-			args.user.should.equal(kinKendall, "user address logged doesn't match kinKendall address from ganache")
+			args.maker.should.equal(kinKendall, "maker address logged doesn't match kinKendall address from ganache")
 			args.amount.toString().should.equal(etherToWei(1).toString(), "amount logged does not match testAmount")
 			args.balance.toString().should.equal(etherToWei(1).toString(), "balance logged does not meet what's expected")	
 		})
@@ -91,7 +109,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 				const args = log_object.args
 				args.token.should.equal(etherAddressZero, "token addresses don't match")
-				args.user.should.equal(kinKendall, "user address logged doesn't match kinKendall address from ganache")
+				args.maker.should.equal(kinKendall, "maker address logged doesn't match kinKendall address from ganache")
 				args.amount.toString().should.equal(etherToWei(3).toString(), "amount logged does not match expected value")
 				args.balance.toString().should.equal('0', "balance logged does not meet what's expected")	
 			})
@@ -122,15 +140,15 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 			it('verifies the token deposit', async() => {
 				// Checks token balance on exchange
 				let exchangeBalance
-				let userBalance
+				let makerBalance
 				
 				// verifies token contract has record of exchange owning deposited tokens
 				exchangeBalance = await token.balanceOf(exchange.address)
 				exchangeBalance.toString().should.equal(testAmount.toString())
 				
-				// verifies exchange tracks number of a specific token designated to user
-				userBalance = await exchange.tokens(token.address, kinKendall)
-				userBalance.toString().should.equal(testAmount.toString())
+				// verifies exchange tracks number of a specific token designated to maker
+				makerBalance = await exchange.tokens(token.address, kinKendall)
+				makerBalance.toString().should.equal(testAmount.toString())
 
 			})
 
@@ -141,7 +159,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 				const args = log_object.args
 				args.token.should.equal(token.address, "token addresses don't match")
-				args.user.should.equal(kinKendall, "user address logged doesn't match kinKendall address from ganache")
+				args.maker.should.equal(kinKendall, "maker address logged doesn't match kinKendall address from ganache")
 				args.amount.toString().should.equal(tokensToWei(7).toString(), "amount logged does not match testAmount")
 				args.balance.toString().should.equal(tokensToWei(7).toString(), "balance logged does not meet what's expected")	
 			})
@@ -194,7 +212,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 				const args = log_object.args
 				args.token.should.equal(token.address, "token addresses don't match")
-				args.user.should.equal(kinKendall, "user address logged doesn't match kinKendall address from ganache")
+				args.maker.should.equal(kinKendall, "maker address logged doesn't match kinKendall address from ganache")
 				args.amount.toString().should.equal(tokensToWei(9).toString(), "amount logged does not match testAmount")
 				args.balance.toString().should.equal(('0'), "balance logged does not meet what's expected")	
 			})
@@ -221,11 +239,11 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 				await exchange.depositToken(token.address, tokensToWei(15), {from: kinKendall})				// deposit 15 tokens from kin to exchange
 			})
 
-			it('returns user ether balance', async() => {
-				const userEther = await exchange.balanceOf(etherAddressZero, kinKendall)
-				userEther.toString().should.equal(etherToWei(13).toString())
-				const userToken = await exchange.balanceOf(token.address, kinKendall)
-				userToken.toString().should.equal(etherToWei(15).toString())
+			it('returns maker ether balance', async() => {
+				const makerEther = await exchange.balanceOf(etherAddressZero, kinKendall)
+				makerEther.toString().should.equal(etherToWei(13).toString())
+				const makerToken = await exchange.balanceOf(token.address, kinKendall)
+				makerToken.toString().should.equal(etherToWei(15).toString())
 			})
 		})			
 	})
@@ -245,7 +263,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 			const sampleOrder = await exchange.orders('1')
 			sampleOrder.id.toString().should.equal('1', 'id does not match')
-			sampleOrder.user.should.equal(kinKendall, 'user does not match')
+			sampleOrder.maker.should.equal(kinKendall, 'maker does not match')
 			sampleOrder.tokenBuy.should.equal(token.address, 'token address does not match')
 			sampleOrder.tokenSell.should.equal(etherAddressZero, 'ether address does not match')
 			sampleOrder.amountBuy.toString().should.equal(tokensToWei(17).toString(), 'amountBuy does not match expected amount of tokens')
@@ -260,7 +278,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 			const args = log_object.args
 			args.id.toString().should.equal('1', 'id does not match')
-			args.user.should.equal(kinKendall, 'user does not match')
+			args.maker.should.equal(kinKendall, 'maker does not match')
 			args.tokenBuy.should.equal(token.address, 'token address does not match')
 			args.tokenSell.should.equal(etherAddressZero, 'ether address does not match')
 			args.amountBuy.toString().should.equal(tokensToWei(17).toString(), 'amountBuy does not match expected amount of tokens')
@@ -273,10 +291,10 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 		beforeEach(async() => {
 
-			// user deposits some ether
+			// maker deposits some ether
 			await exchange.depositEther({from: kinKendall, value: etherToWei(3)})
 
-			// user makes an order to buy tokens using ether
+			// maker makes an order to buy tokens using ether
 			await exchange.makeOrder(token.address, etherAddressZero, tokensToWei(20), etherToWei(2), {from: kinKendall})
 		})
 
@@ -304,7 +322,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 					const args = log_object.args
 					args.id.toString().should.equal('1', 'id does not match')
-					args.user.should.equal(kinKendall, 'user does not match')
+					args.maker.should.equal(kinKendall, 'maker does not match')
 					args.tokenBuy.should.equal(token.address, 'token address does not match')
 					args.tokenSell.should.equal(etherAddressZero, 'ether address does not match')
 					args.amountBuy.toString().should.equal(tokensToWei(20).toString(), 'amountBuy does not match expected amount of tokens')
@@ -323,7 +341,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 				it('rejects cancellation attemps of unauthorized orders', async() => {
 					
-					//valid order attempted to be cancelled by unauthorized user
+					//valid order attempted to be cancelled by unauthorized maker
 					await exchange.cancelOrder('1', {from: srinjoyChakravarty}).should.be.rejectedWith(EVM_REVERT)
 				})
 			})
