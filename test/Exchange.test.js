@@ -9,14 +9,12 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 	let exchange
 	let token
-	const makerNumerator = 11
-	const makerDenominator = 25
-	const takerNumerator = 17
-	const takerDenominator = 50
+	const makerFee = 1
+	const takerFee = 2
 
 	beforeEach(async() => {
 		//Sets up exchange for all tests
-		exchange = await Exchange.new(feeReceiver, makerNumerator, makerDenominator, takerNumerator, takerDenominator)
+		exchange = await Exchange.new(feeReceiver, makerFee, takerFee)
 		//Sets up dexcoin as the sample erc20 token for all tests
 		token = await Token.new()
 		// Gives kin the maker some tokens to trade with on the exchange
@@ -26,28 +24,18 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 	describe('deployment', () => {
 
 		it('tracks the fee receiver account', async() => {
-			const feeAddress = await exchange.feeRecevier()
+			const feeAddress = await exchange.feeReceiver()
 			feeAddress.should.equal(feeReceiver)
 		})
 
-		it('tracks the maker numerator', async() => {
-			const makerNumerator = await exchange.makerNumerator()
-			makerNumerator.toString().should.equal('11')
+		it('tracks the maker fee', async() => {
+			const makerFee = await exchange.makerFee()
+			makerFee.toString().should.equal('1')
 		})
 
-		it('tracks the maker denominator', async() => {
-			const makerDenominator = await exchange.makerDenominator()
-			makerDenominator.toString().should.equal('25')
-		})
-
-		it('tracks the taker numerator', async() => {
-			const takerNumerator = await exchange.takerNumerator()
-			takerNumerator.toString().should.equal('17')
-		})
-
-		it('tracks the taker denominator', async() => {
-			const takerDenominator = await exchange.takerDenominator()
-			takerDenominator.toString().should.equal('50')
+		it('tracks the taker fee', async() => {
+			const takerFee = await exchange.takerFee()
+			takerFee.toString().should.equal('2')
 		})
 	})
 
@@ -291,11 +279,102 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 
 		beforeEach(async() => {
 
-			// maker deposits some ether
+			// maker kinKendall deposits only ether on the exchange
 			await exchange.depositEther({from: kinKendall, value: etherToWei(3)})
 
-			// maker makes an order to buy tokens using ether
+			// taker srinjoyChakravarty given some tokens to start with from dexcoin fund
+			await token.transfer(srinjoyChakravarty, tokensToWei(33), {from: deployer})
+
+			// taker srinjoyChakravarty approves only some tokens to the exchange
+			await token.approve(exchange.address, tokensToWei(30), {from: srinjoyChakravarty})
+
+			// taker srinjoyChakravarty deposits only some tokens on the exchange
+			await exchange.depositToken(token.address, tokensToWei(27), {from: srinjoyChakravarty})
+
+			// maker kinKendall makes an order to buy tokens using his ether previously deposited on the exchange
 			await exchange.makeOrder(token.address, etherAddressZero, tokensToWei(20), etherToWei(2), {from: kinKendall})
+		})
+
+		describe('filling orders', async() => {
+
+			let filledOrder
+
+			describe('successfully filled order', async() => {
+
+				beforeEach(async() => {
+
+					// taker srinjoyChakravarty fills order by accepting the ether price bid by maker kinKendall to buy some tokens
+					filledOrder = await exchange.fillOrder('1', {from: srinjoyChakravarty})
+				})
+
+				it('executes the trade and charges taker fees successfully', async() => {
+					
+					let makerTokenBalance
+					let takerEtherBalance
+					let makerEtherBalance
+					let takerTokenBalance
+					let feesReceived
+
+					makerTokenBalance = await exchange.balanceOf(token.address, kinKendall)
+					makerTokenBalance.toString().should.equal(tokensToWei(20).toString(), 'maker did not receive their tokens correctly')
+
+					takerEtherBalance = await exchange.balanceOf(etherAddressZero, srinjoyChakravarty)
+					takerEtherBalance.toString().should.equal(etherToWei(2).toString(), 'taker did not receive their ether correctly')
+
+					// makerEtherBalance = await exchange.balanceOf(etherAddressZero, kinKendall)
+					// makerEtherBalance.toString().should.equal(etherToWei(1), 'maker did not have their ether deducted accurately')
+
+					takerTokenBalance = await exchange.balanceOf(token.address, srinjoyChakravarty)
+					takerTokenBalance.toString().should.equal(tokensToWei(6.96).toString(), 'taker did not have their tokens deducted accurately with the fee applied')
+
+					const feeReceiver = await exchange.feeReceiver()
+					feesReceived = await exchange.balanceOf(token.address, feeReceiver)
+					feesReceived.toString().should.equal(tokensToWei(0.04).toString(), 'taker fees accurately received by exchange for maintenance')
+				})
+
+				it('updates state with all filled orders', async() => {
+					
+					const orderFilled = await exchange.ordersFilled(1)
+					orderFilled.should.equal(true)
+				})
+
+				it('emits a trade event', async() => {
+					
+					const log_object = filledOrder.logs[0]
+					log_object.event.should.equal("Trade")
+
+					const args = log_object.args
+					args.id.toString().should.equal('1', 'id does not match')
+					args.maker.should.equal(kinKendall, 'maker does not match')
+					args.taker.should.equal(srinjoyChakravarty, 'taker does not match')
+					args.tokenBuy.should.equal(token.address, 'token address does not match')
+					args.tokenSell.should.equal(etherAddressZero, 'ether address does not match')
+					args.amountBuy.toString().should.equal(tokensToWei(20).toString(), 'amountBuy does not match expected amount of tokens')
+					args.amountSell.toString().should.equal(etherToWei(2).toString(), 'amountSell does not match expected amount of ether')
+					args.timestamp.toString().length.should.be.at.least(1, 'timestamp is not present')
+				})
+			})
+
+			describe('failed filled order', async() => {
+
+				it('rejects invalid order ids', async() => {
+					
+					const inappropriateOrderID = 3
+					await exchange.fillOrder(inappropriateOrderID, {from: srinjoyChakravarty}).should.be.rejectedWith(EVM_REVERT) 
+				})
+
+				it('rejects already filled orders', async() => {
+					
+					await exchange.fillOrder('1', {from: srinjoyChakravarty}).should.be.fulfilled					// legitimately fills the order first time round
+					await exchange.fillOrder('1', {from: srinjoyChakravarty}).should.be.rejectedWith(EVM_REVERT)	// rejects attempt to refill the same order
+				})
+
+				it('rejects previously cancelled orders', async() => {
+					
+					await exchange.cancelOrder('1', {from: kinKendall}).should.be.fulfilled							// maker changes their mind and cancels their initial order	
+					await exchange.fillOrder('1', {from: srinjoyChakravarty}).should.be.rejectedWith(EVM_REVERT)	// rejects attempts to fill a cancelled order				
+				})
+			})
 		})
 
 		describe('cancelling orders', async() => {
