@@ -126,12 +126,14 @@ contract Exchange {
 	}
 
 	function commitTrade(uint256 _orderID, address _maker, address _tokenBuy, address _tokenSell, uint256 _amountBuy, uint256 _amountSell) internal {
-		uint256 _takerFee = _amountSell.mul(takerFee).div(100);																// taker fee set to just 1 %
+		uint256 _takerFee = _amountSell.mul(takerFee).div(100);																// taker fee set to just 2 %
+		uint256 _makerFee = _amountBuy.mul(makerFee).div(100);																// maker fee set to just 1 % 
 
 		// taker == msg.sender
 		tokens[_tokenBuy][msg.sender] = tokens[_tokenBuy][msg.sender].sub(_amountBuy.add(_takerFee));						// maker's ask is subtracted from taker along with a negligible taker fee
-		tokens[_tokenSell][_maker] = tokens[_tokenSell][_maker].sub(_amountSell);											// taker's bid is subtracted from maker
+		tokens[_tokenSell][_maker] = tokens[_tokenSell][_maker].sub(_amountSell.add(_makerFee));							// taker's bid is subtracted from maker along with a negligible taker fee
 		tokens[_tokenBuy][feeReceiver] = tokens[_tokenBuy][feeReceiver].add(_takerFee);										// dex exchange receives taker fee for maintenance costs
+		tokens[_tokenSell][feeReceiver] = tokens[_tokenSell][feeReceiver].add(_makerFee);									// dex exchange receives maker fee for maintenance costs
 		tokens[_tokenBuy][_maker] = tokens[_tokenBuy][_maker].add(_amountBuy);												// taker's ask is added to maker
 		tokens[_tokenSell][msg.sender] = tokens[_tokenSell][msg.sender].add(_amountSell);									// maker's bid is added to taker
 

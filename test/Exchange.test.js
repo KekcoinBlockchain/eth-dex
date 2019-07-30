@@ -314,6 +314,7 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 					let makerEtherBalance
 					let takerTokenBalance
 					let feesReceived
+					let feesReceived2
 
 					makerTokenBalance = await exchange.balanceOf(token.address, kinKendall)
 					makerTokenBalance.toString().should.equal(tokensToWei(20).toString(), 'maker did not receive their tokens correctly')
@@ -330,6 +331,8 @@ contract('Exchange', ([deployer, feeReceiver, kinKendall, srinjoyChakravarty]) =
 					const feeReceiver = await exchange.feeReceiver()
 					feesReceived = await exchange.balanceOf(token.address, feeReceiver)
 					feesReceived.toString().should.equal(tokensToWei(0.04).toString(), 'taker fees accurately received by exchange for maintenance')
+					feesReceived2 = await exchange.balanceOf(etherAddressZero, feeReceiver)
+					feesReceived2.toString().should.equal(etherToWei(0.2).toString(), 'maker fees accurately received by exchange for maintenance')
 				})
 
 				it('updates state with all filled orders', async() => {
