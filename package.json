@@ -1,6 +1,9 @@
 {
   "name": "ethdex-exchange",
   "version": "0.1.0",
+  "engines": {
+    "node": "9.10.0"
+  },
   "description": "Decentralized Ethereum Exchange",
   "author": "schakravarty3@gatech.edu",
   "private": true,
