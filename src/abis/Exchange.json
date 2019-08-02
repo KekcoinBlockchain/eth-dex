@@ -20708,12 +20708,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0xC55c5481DF4cc78bFe44d62Ee8CD45b84017a37B",
-      "transactionHash": "0xaafb8b6cefba1e904a5d65c26943adac64237aa61646212cf09e46795dd3f5e9"
+      "address": "0xE9B8d30A5EC26F466FbEd03739D2B61E430B7865",
+      "transactionHash": "0x551e3fa72cbd08209d642813c0d6fbce8e3c194808e98be99afc7643ecb3cd9f"
     }
   },
   "schemaVersion": "3.0.2",
-  "updatedAt": "2019-07-30T13:22:58.332Z",
+  "updatedAt": "2019-08-02T21:26:01.267Z",
   "devdoc": {
     "methods": {}
   },
