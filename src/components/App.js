@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
-import Web3 from 'web3'
-import Token from '../abis/Token.json'
+import Web3 from 'web3';
+import Token from "../abis/Token.json";
 
 class App extends Component {
   componentWillMount() {
@@ -9,13 +9,32 @@ class App extends Component {
   }
 
   async loadBlockchainData() {
-    const web3 = new Web3(Web3.givenProvider || 'http://localhost:7545')
-    const network = await web3.eth.net.getNetworkType()
-    const networkId = await web3.eth.net.getId()
-    const accounts = await web3.eth.getAccounts()
-    const token = web3.eth.Contract(Token.abi, Token.networks[networkId].address)
-    const totalSupply = await token.methods.totalSupply().call()
-    console.log("totalSupply", totalSupply)
+    const web3 = new Web3(Web3.givenProvider || 'http://localhost:7545');
+    const network = await web3.eth.net.getNetworkType();
+    const networkID = await web3.eth.net.getId();
+    const accounts = await web3.eth.getAccounts();
+    const jsonInterface = Token.abi;
+    const tokenNetworks = Token.networks;
+    const networkData = tokenNetworks[networkID];
+    const tokenAddress = networkData.address;
+    const token = await web3.eth.Contract(jsonInterface, tokenAddress);
+    const tokenName = await token.methods.name().call();
+    const tokenSymbol = await token.methods.symbol().call();
+    const totalSupply = await token.methods.totalSupply().call();
+    console.log("web3: ", web3);
+    console.log("network: ", network);
+    console.log("network id: ", networkID);
+    console.log("accounts: ", accounts[0]);
+    console.log("abi: ", jsonInterface);
+    console.log("token networks: ", tokenNetworks);
+    console.log("network data: ", networkData);
+    console.log("token address: ", tokenAddress);
+    console.log("token: ", token);
+    console.log("token name:", tokenName);
+    console.log("token symbol:", tokenSymbol);
+    console.log("total supply: ", totalSupply);
+
+    
   }
 
   render() {

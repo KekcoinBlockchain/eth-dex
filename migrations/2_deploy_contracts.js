@@ -7,7 +7,7 @@ module.exports = async function(deployer) {
 
 	await deployer.deploy(Token);
 
-	const feeReceiver = accounts[2];
+	const feeReceiver = accounts[0];
 	const makerFee = 1;
 	const takerFee = 2;
 
