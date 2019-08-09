@@ -32,9 +32,7 @@ class App extends Component {
     console.log("token: ", token);
     console.log("token name:", tokenName);
     console.log("token symbol:", tokenSymbol);
-    console.log("total supply: ", totalSupply);
-
-    
+    console.log("total supply: ", totalSupply);  
   }
 
   render() {
