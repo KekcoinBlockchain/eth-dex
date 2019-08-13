@@ -1,9 +1,13 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import './App.css';
 import Web3 from 'web3';
 import {connect} from 'react-redux';
-import Token from '../abis/Token.json';
-import {loadWeb3} from '../store/interactions';
+import {
+        loadWeb3, 
+        loadAccount, 
+        loadToken, 
+        loadExchange
+       } from '../store/interactions';
 
 class App extends Component {
   componentWillMount() {
@@ -14,27 +18,28 @@ class App extends Component {
     const web3 = loadWeb3(dispatch);
     const network = await web3.eth.net.getNetworkType();
     const networkID = await web3.eth.net.getId();
-    const accounts = await web3.eth.getAccounts();
-    const jsonInterface = Token.abi;
-    const tokenNetworks = Token.networks;
-    const networkData = tokenNetworks[networkID];
-    const tokenAddress = networkData.address;
-    const token = await web3.eth.Contract(jsonInterface, tokenAddress);
-    const tokenName = await token.methods.name().call();
-    const tokenSymbol = await token.methods.symbol().call();
-    const totalSupply = await token.methods.totalSupply().call();
-    console.log("web3: ", web3);
-    console.log("network: ", network);
-    console.log("network id: ", networkID);
-    console.log("accounts: ", accounts[0]);
-    console.log("abi: ", jsonInterface);
-    console.log("token networks: ", tokenNetworks);
-    console.log("network data: ", networkData);
-    console.log("token address: ", tokenAddress);
-    console.log("token: ", token);
-    console.log("token name:", tokenName);
-    console.log("token symbol:", tokenSymbol);
-    console.log("total supply: ", totalSupply);  
+    const accounts = loadAccount(web3, dispatch);
+    // const jsonInterface = Token.abi;
+    // const tokenNetworks = Token.networks;
+    // const networkData = tokenNetworks[networkID];
+    // const tokenAddress = networkData.address;
+    const token = loadToken(web3, networkID, dispatch);
+    loadExchange(web3, networkID, dispatch);
+    // const tokenName = await token.methods.name().call();
+    // const tokenSymbol = await token.methods.symbol().call();
+    // const totalSupply = await token.methods.totalSupply().call();
+    // console.log("web3: ", web3);
+    // console.log("network: ", network);
+    // console.log("network id: ", networkID);
+    // console.log("accounts: ", accounts);
+    // console.log("abi: ", jsonInterface);
+    // console.log("token networks: ", tokenNetworks);
+    // console.log("network data: ", networkData);
+    // console.log("token address: ", tokenAddress);
+    // console.log("token: ", token);
+    // console.log("token name:", tokenName);
+    // console.log("token symbol:", tokenSymbol);
+    // console.log("total supply: ", totalSupply);  
   }
 
   render() {
