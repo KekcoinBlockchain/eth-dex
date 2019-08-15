@@ -10,7 +10,7 @@ import {
         loadToken, 
         loadExchange
        } from '../store/interactions';
-import {accountSelector} from '../store/selectors';
+import {contractsLoadedSelector} from '../store/selectors';
 
 class App extends Component {
   componentWillMount() {
@@ -27,7 +27,15 @@ class App extends Component {
     // const networkData = tokenNetworks[networkID];
     // const tokenAddress = networkData.address;
     const token = loadToken(web3, networkID, dispatch);
-    loadExchange(web3, networkID, dispatch);
+    if(!token) {
+      window.alert('Token smart contract not detected on the current network. Please select another network on Metamask');
+      return;
+    }
+    const exchange = await loadExchange(web3, networkID, dispatch);
+    if(!exchange) {
+      window.alert('Exchange smart contract not detected on the current network. Please select another network on Metamask');
+      return;
+    }
     // const tokenName = await token.methods.name().call();
     // const tokenSymbol = await token.methods.symbol().call();
     // const totalSupply = await token.methods.totalSupply().call();
@@ -49,7 +57,7 @@ class App extends Component {
     return (
       <div>
         <Navbar/>
-        <Content/>
+        {this.props.contractsLoaded ? <Content/> : <div className="content"></div>}
       </div>
     );
   };
@@ -57,7 +65,7 @@ class App extends Component {
 
 function mapStateToProps(state) {
   return {
-    account: accountSelector(state)
+    contractsLoaded: contractsLoadedSelector(state)
   };
 };
 

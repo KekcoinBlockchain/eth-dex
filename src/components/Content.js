@@ -74,8 +74,7 @@ class Content extends Component {
 }
 
 function mapStateToProps(state) {
-  return {
-    
+  return { 
   };
 };
 
