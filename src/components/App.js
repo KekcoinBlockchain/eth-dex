@@ -13,11 +13,14 @@ import {
 import {contractsLoadedSelector} from '../store/selectors';
 
 class App extends Component {
-  componentWillMount() {
-    this.loadBlockchainData(this.props.dispatch)
+  
+  componentWillMount() 
+  {
+    this.loadBlockchainData(this.props.dispatch);
   }
 
-  async loadBlockchainData(dispatch) {
+  async loadBlockchainData(dispatch) 
+  {
     const web3 = loadWeb3(dispatch);
     await web3.eth.net.getNetworkType();
     const networkID = await web3.eth.net.getId();

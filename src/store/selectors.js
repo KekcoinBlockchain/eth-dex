@@ -16,3 +16,5 @@ export const contractsLoadedSelector = createSelector(
 	(tkn, exc) => (tkn && exc)
 	)
 
+const exchange = state => get(state, 'exchange.contract');
+export const exchangeSelector = createSelector(exchange, (xchng_cntrct) => {return xchng_cntrct});
